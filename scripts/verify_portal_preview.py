@@ -4,6 +4,7 @@
 import argparse
 import copy
 import json
+import socket
 import time
 from pathlib import Path
 from urllib.error import URLError
@@ -14,16 +15,28 @@ from claude_foundry.portal.service import publish
 from claude_foundry.verify import request as gateway_request
 
 
-def request(*args, **kwargs):
-    """Retry connection refusal only: no HTTP request was delivered in that case."""
+def connection_retry(call, *args, **kwargs):
+    """Retry DNS/refusal failures before delivery, never ambiguous HTTP timeouts."""
     for attempt in range(3):
         try:
-            return gateway_request(*args, **kwargs)
+            return call(*args, **kwargs)
         except URLError as error:
-            if not isinstance(error.reason, ConnectionRefusedError) or attempt == 2:
+            if (
+                not isinstance(error.reason, (ConnectionRefusedError, socket.gaierror))
+                or attempt == 2
+            ):
                 raise
-            print("Connection refused before request delivery; retrying.", flush=True)
-            time.sleep(1)
+            print("Connection failed before request delivery; retrying.", flush=True)
+            time.sleep(2**attempt)
+
+
+def request(*args, **kwargs):
+    return connection_retry(gateway_request, *args, **kwargs)
+
+
+class PreviewAzure(Azure):
+    def request(self, *args, **kwargs):
+        return connection_retry(super().request, *args, **kwargs)
 
 
 def verify(config, state, output, all_models=False):
@@ -31,7 +44,7 @@ def verify(config, state, output, all_models=False):
         raise ValueError(
             "These tests temporarily change entitlements. A separate preview API is required."
         )
-    azure = Azure(config["subscription_id"])
+    azure = PreviewAzure(config["subscription_id"])
     token = az_json(
         "account",
         "get-access-token",
