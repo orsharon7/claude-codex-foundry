@@ -40,6 +40,12 @@ Open `http://127.0.0.1:8787`. For live analytics set `PORTAL_INSIGHTS_APP_ID` to
 
 Use the authenticated Azure preview for real Entra sign-in testing. Local administrator mode deliberately has no user-switching shortcut and is not evidence that authentication works.
 
+### Sign-in troubleshooting
+
+Open the hosted portal in the browser/profile normally used for work. An embedded browser has its own Microsoft session; being signed into Azure in another browser does not share that session. The portal lets Entra reuse an existing session without forcing an account picker and never starts a sign-in redirect automatically after an error.
+
+`AADSTS50012` is a general authentication failure. Use the correlation ID and timestamp in **Sign-in diagnostic details** to look up the specific failure in Entra sign-in logs. During preview validation, an attempt reported `130500: Phone sign in was blocked due to User Credential Policy` even though MFA was satisfied. Repeating that phone sign-in is not a repair: use a method allowed by the organization's policy, such as the password option when offered, or ask its identity administrator to investigate. Do not disable MFA, change tenant authentication policy, or add a client secret to this SPA as a workaround.
+
 ## Isolated Azure preview
 
 The administrator needs permissions to create resources and scoped role assignments, plus permission to register a single-tenant Entra application. Developers need neither subscription access nor the administrator CLI.

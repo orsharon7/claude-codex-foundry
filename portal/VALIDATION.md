@@ -5,7 +5,7 @@ Status: **unreleased**. This record describes checks on the development branch, 
 ## Verified on 2026-10-14
 
 - Python suite: 59 passing tests, including token verification, role boundaries, suspension, revision conflicts, import validation, policy compilation, and publication rollback behavior.
-- Frontend: strict TypeScript production build and four CSV/estimate tests pass.
+- Frontend: strict TypeScript production build and eight CSV/estimate/authentication tests pass. Authentication tests cover rejected redirects without automatic retries, cached-account reuse, the absence of a forced account picker, and failed bootstrap handling.
 - Infrastructure: Bicep compiles; the isolated Azure Functions preview package deploys with managed identity and private Blob networking.
 - Hosted public endpoints: health and sign-in bootstrap return 200; unauthenticated state access returns 401.
 - Separate APIM preview API: all nine deployed Anthropic models answer small real inference requests. Streaming, token counting, missing/invalid credentials, model denial, filtered catalog, suspension, and an organization token quota were checked. Original preview policies were restored afterward.
@@ -13,6 +13,8 @@ Status: **unreleased**. This record describes checks on the development branch, 
 - Scale of configuration: 2,000-member CSV import and generated policy size pass automated checks. This is not a concurrency or throughput test.
 - UI: overview, live usage/budgets, group editor, command search with Enter navigation, dialog focus restoration, and a 390-pixel layout were inspected in the browser.
 - The existing production gateway policy was compared with its pre-test hash and remains unchanged.
+
+Hosted sign-in is still pending. In the observed sign-in sequence, Entra returned `AADSTS50012`; an available app-scoped log recorded `130500` with phone sign-in blocked by User Credential Policy, despite the MFA requirement being satisfied. The portal now retains its sign-in screen with diagnostic details after a rejected redirect. No authentication-method or tenant policy was changed.
 
 ## Still required before release
 

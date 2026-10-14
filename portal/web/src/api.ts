@@ -7,8 +7,15 @@ import { csvText } from "./csv";
 let msal: PublicClientApplication | undefined;
 let interactionRequired: typeof InteractionRequiredAuthError | undefined;
 let config: Bootstrap;
-export async function initialize() {
-    config = await (await fetch("/api/bootstrap")).json();
+export async function initialize(): Promise<
+    Bootstrap & { signInError?: string }
+> {
+    const response = await fetch("/api/bootstrap");
+    if (!response.ok)
+        throw new Error(
+            "The portal configuration could not be loaded. Try again shortly.",
+        );
+    config = await response.json();
     if (config.configured && !config.local) {
         const { PublicClientApplication, InteractionRequiredAuthError } =
             await import("@azure/msal-browser");
@@ -22,8 +29,21 @@ export async function initialize() {
             cache: { cacheLocation: "sessionStorage" },
         });
         await msal.initialize();
-        const response = await msal.handleRedirectPromise();
-        if (response) msal.setActiveAccount(response.account);
+        // A rejected sign-in must leave the portal usable, without automatically
+        // starting another redirect or confusing it with a connection failure.
+        let redirect;
+        try {
+            redirect = await msal.handleRedirectPromise();
+        } catch (error) {
+            return {
+                ...config,
+                signInError:
+                    error instanceof Error
+                        ? error.message
+                        : "Microsoft did not complete sign-in.",
+            };
+        }
+        if (redirect) msal.setActiveAccount(redirect.account);
         else if (msal.getAllAccounts().length === 1)
             msal.setActiveAccount(msal.getAllAccounts()[0]);
     }
@@ -33,7 +53,6 @@ export async function signIn() {
     if (msal)
         await msal.loginRedirect({
             scopes: [`api://${config.clientId}/access_as_user`],
-            prompt: "select_account",
         });
 }
 export async function signOut() {

@@ -127,6 +127,7 @@ function App() {
     const [state, setState] = useState<State>();
     const [usage, setUsage] = useState<Telemetry>(emptyTelemetry);
     const [usageError, setUsageError] = useState("");
+    const [signInDetails, setSignInDetails] = useState("");
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
     const [page, setPage] = useState(
@@ -163,6 +164,13 @@ function App() {
         initialize()
             .then(async (config) => {
                 setBoot(config);
+                if (config.signInError) {
+                    setSignInDetails(config.signInError);
+                    setError(
+                        "Microsoft could not complete sign-in. Use this portal in your normal work browser and choose an authentication method permitted by your organization.",
+                    );
+                    return;
+                }
                 if (config.configured) {
                     const data = await load();
                     if (data.viewer.role !== "developer") await loadUsage();
@@ -295,6 +303,12 @@ function App() {
                     </p>
                     {error && error !== "Sign in to continue." && (
                         <Notice tone="error">{error}</Notice>
+                    )}
+                    {signInDetails && (
+                        <details className="footnote">
+                            <summary>Sign-in diagnostic details</summary>
+                            <p>{signInDetails}</p>
+                        </details>
                     )}
                     {boot.configured ? (
                         <button
