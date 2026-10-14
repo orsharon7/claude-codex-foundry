@@ -1,4 +1,11 @@
-import { useRef, type ReactNode } from "react";
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
+    type ReactNode,
+} from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { CheckCircle, WarningCircle, X, Info } from "@phosphor-icons/react";
 export const fmt = (n: number) => new Intl.NumberFormat("en-US").format(n);
@@ -188,6 +195,127 @@ export function Modal({
                 </Dialog.Content>
             </Dialog.Portal>
         </Dialog.Root>
+    );
+}
+const DrawerCloseContext = createContext<() => void>(() => {});
+export function DrawerClose({
+    children = "Cancel",
+    disabled = false,
+}: {
+    children?: ReactNode;
+    disabled?: boolean;
+}) {
+    const close = useContext(DrawerCloseContext);
+    return (
+        <button
+            type="button"
+            className="button"
+            onClick={close}
+            disabled={disabled}
+        >
+            {children}
+        </button>
+    );
+}
+export function Drawer({
+    title,
+    description,
+    children,
+    onClose,
+    busy = false,
+    protect = true,
+}: {
+    title: string;
+    description: string;
+    children: ReactNode;
+    onClose: () => void;
+    busy?: boolean;
+    protect?: boolean;
+}) {
+    const returnFocus = useRef(document.activeElement as HTMLElement | null);
+    const [open, setOpen] = useState(true);
+    const [dirty, setDirty] = useState(false);
+    const [confirm, setConfirm] = useState(false);
+    const closeRef = useRef(onClose);
+    closeRef.current = onClose;
+    useEffect(() => {
+        if (open) return;
+        const timer = window.setTimeout(() => closeRef.current(), 180);
+        return () => window.clearTimeout(timer);
+    }, [open]);
+    const close = () => {
+        if (busy) return;
+        if (protect && dirty) setConfirm(true);
+        else setOpen(false);
+    };
+    return (
+        <DrawerCloseContext.Provider value={close}>
+            <Dialog.Root
+                open={open}
+                onOpenChange={(next) => {
+                    if (!next) close();
+                }}
+            >
+                <Dialog.Portal>
+                    <Dialog.Overlay className="overlay drawer-overlay" />
+                    <Dialog.Content
+                        className="drawer"
+                        onChangeCapture={() => setDirty(true)}
+                        onCloseAutoFocus={(event) => {
+                            event.preventDefault();
+                            if (returnFocus.current?.isConnected)
+                                returnFocus.current.focus();
+                            else document.getElementById("main")?.focus();
+                        }}
+                    >
+                        <header className="drawer-header">
+                            <span className="eyebrow">
+                                Claude Foundry / Workspace
+                            </span>
+                            <Dialog.Title asChild>
+                                <h2>{title}</h2>
+                            </Dialog.Title>
+                            <Dialog.Description>
+                                {description}
+                            </Dialog.Description>
+                            <button
+                                className="iconbutton close"
+                                aria-label="Close drawer"
+                                onClick={close}
+                                disabled={busy}
+                            >
+                                <X size={20} />
+                            </button>
+                        </header>
+                        {confirm && (
+                            <div className="drawer-confirm" role="alert">
+                                <strong>Discard unsaved changes?</strong>
+                                <p>
+                                    Your saved configuration will stay as it is.
+                                </p>
+                                <div className="actions">
+                                    <button
+                                        className="button"
+                                        onClick={() => setConfirm(false)}
+                                    >
+                                        Keep editing
+                                    </button>
+                                    <button
+                                        className="button danger"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        Discard changes
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        <div className="drawer-content" aria-busy={busy}>
+                            {children}
+                        </div>
+                    </Dialog.Content>
+                </Dialog.Portal>
+            </Dialog.Root>
+        </DrawerCloseContext.Provider>
     );
 }
 export function Field({

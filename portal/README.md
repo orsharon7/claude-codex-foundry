@@ -12,10 +12,14 @@ This is a customer-owned control plane for the existing standard APIM gateway. I
 - Model access requests, decisions, versioned drafts, publication review, and audit records.
 - Organization, group, and developer token quotas; individual request and token rate limits.
 - Application Insights request analytics and current-month token metrics without conversation content.
-- Model planning rates and dollar estimates, with missing-rate and threshold notices. Dollar budgets do not stop inference or reconcile Azure invoices.
+- Cost analysis with custom UTC ranges (up to 93 days), previous-period comparisons, combined model/group/developer filters, drill-downs, daily charts/tables, and CSV exports. Totals are aggregated in Application Insights; breakdowns are capped at 2,500 dimensions across both periods and explicitly marked when truncated.
+- Forms in responsive drawers with persistent actions and unsaved-change protection.
+- Model planning rates with source/date/notes and dollar estimates, with missing-rate and threshold notices. Dollar budgets do not stop inference or reconcile Azure invoices.
 - Client profile export for the existing Mac installer. Supply the separate desktop public-client ID for MSAL onboarding without Azure CLI.
 
 The portal does not replace Entra account lifecycle, Conditional Access, device management, Claude conversation controls, Azure Cost Management, or an immutable compliance archive. It does not claim Anthropic enterprise certification, SCIM support, invoice management, or legal/compliance guarantees.
+
+See [the dated public pricing reference](PRICING.md) before configuring model rates. Deployment geography and prompt-length tiers can change the applicable price. Current rates recalculate historical planning estimates; no Azure billing data is imported. Cost analysis uses the existing monitoring permission, a 60-second bounded cache, and retained APIM metrics; no additional Azure resources are required.
 
 ## Local development
 

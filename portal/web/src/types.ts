@@ -63,6 +63,9 @@ export interface State {
         model: string;
         input_per_million: number;
         output_per_million: number;
+        source_url?: string;
+        verified_on?: string;
+        note?: string;
     }[];
     requests: AccessRequest[];
     published_revision: number | null;

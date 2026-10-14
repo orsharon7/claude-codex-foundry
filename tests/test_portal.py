@@ -384,3 +384,72 @@ def test_publication_requires_review_and_success_sets_revision(app, org, key, mo
         saved = app.state.store.read()[0]
         assert saved["publish_status"] == "published"
         assert saved["revision"] == saved["published_revision"]
+
+
+def test_cost_analysis_enforces_roles_and_date_bounds(app, org, key):
+    body = {"start": "2024-03-01", "end": "2024-03-02"}
+    data, etag = app.state.store.read()
+    developer = add_member(data)
+    billing = add_member(data, "billing")
+    app.state.store.save(data, etag)
+    with TestClient(app) as client:
+        assert client.post("/api/cost-analysis", json=body).status_code == 401
+        assert (
+            client.post(
+                "/api/cost-analysis", json=body, headers=headers(org, key, developer["id"])
+            ).status_code
+            == 403
+        )
+        result = client.post(
+            "/api/cost-analysis", json=body, headers=headers(org, key, billing["id"])
+        )
+        assert result.status_code == 200
+        assert result.json()["status"] == "not_configured"
+        assert (
+            client.post(
+                "/api/cost-analysis", json={**body, "end": "2024-09-01"}, headers=headers(org, key)
+            ).status_code
+            == 422
+        )
+
+
+def test_cost_cache_changes_with_rates_and_does_not_cache_failures(app, org, key, monkeypatch):
+    calls = []
+
+    def query(app_id, credential, config, filters, prices):
+        calls.append(prices)
+        if len(calls) == 1:
+            raise ValueError("Transient query failure")
+        return {"status": "connected", "totals": []}
+
+    monkeypatch.setattr("claude_foundry.portal.app.cost_analysis", query)
+    with TestClient(app) as client:
+        body = {"start": "2024-03-01", "end": "2024-03-02"}
+        auth = headers(org, key)
+        assert client.post("/api/cost-analysis", json=body, headers=auth).status_code == 502
+        assert client.post("/api/cost-analysis", json=body, headers=auth).status_code == 200
+        client.post("/api/cost-analysis", json=body, headers=auth)
+        assert len(calls) == 2
+        data, etag = app.state.store.read()
+        data["prices"] = [
+            {"model": "claude-sonnet-4-6", "input_per_million": 3, "output_per_million": 15}
+        ]
+        app.state.store.save(data, etag)
+        client.post("/api/cost-analysis", json=body, headers=auth)
+        assert len(calls) == 3
+
+
+def test_planning_rates_keep_public_source_and_reject_unsafe_urls(state):
+    value = {
+        "model": "claude-sonnet-4-6",
+        "input_per_million": 3,
+        "output_per_million": 15,
+        "source_url": "https://platform.claude.com/docs/en/about-claude/pricing",
+        "verified_on": "2026-10-14",
+        "note": "Global Standard; public base rates.",
+    }
+    updated = change(state, "pricing", value)
+    assert updated["prices"][0]["verified_on"] == "2026-10-14"
+    assert updated["audit"][-1]["after"]["source_url"] == value["source_url"]
+    with pytest.raises(ValueError):
+        change(state, "pricing", {**value, "source_url": "javascript:alert(1)"})

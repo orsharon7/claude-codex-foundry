@@ -16,6 +16,7 @@ from pydantic import ValidationError
 
 from ..config import export_client, load_org
 from .auth import Authenticator
+from .costs import CostQuery, cost_analysis
 from .domain import Change, apply_change, audit, effective_models, import_members, now, seed
 from .governance import impact
 from .service import ManagedAzure, publish, telemetry
@@ -43,6 +44,7 @@ def create_app(config=None, store=None, credential=None, local=None):
     app = FastAPI(title="Claude Foundry Admin", docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store = store
     app.state.telemetry_cache = None
+    app.state.cost_cache = {}
 
     def storage():
         if app.state.store is None:
@@ -278,6 +280,29 @@ def create_app(config=None, store=None, credential=None, local=None):
                 502,
                 "Usage could not be loaded from Application Insights. Check the portal identity's monitoring access, then retry.",
             ) from None
+
+    @app.post("/api/cost-analysis")
+    def costs(body: CostQuery, member=actor_dependency):
+        administrative(member)
+        prices = storage().read()[0]["prices"]
+        key = body.model_dump_json() + json.dumps(prices, sort_keys=True)
+        cached = app.state.cost_cache.get(key)
+        if cached and (datetime.now(UTC) - cached[0]).total_seconds() < 60:
+            return cached[1]
+        try:
+            result = cost_analysis(
+                os.getenv("PORTAL_INSIGHTS_APP_ID"), credential, config, body, prices
+            )
+        except Exception:
+            raise HTTPException(
+                502,
+                "Cost analysis could not be loaded from Application Insights. Retry with a shorter period or check monitoring access.",
+            ) from None
+        # Bound in-memory query caching; never cache auth decisions or failed queries.
+        if len(app.state.cost_cache) >= 16:
+            app.state.cost_cache.pop(next(iter(app.state.cost_cache)))
+        app.state.cost_cache[key] = (datetime.now(UTC), result)
+        return result
 
     @app.get("/api/client-profile")
     def client_profile(group_id: str | None = None, member=actor_dependency):

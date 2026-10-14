@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import type { Group, Member, Settings, State } from "./types";
 import { api } from "./api";
-import { Field, Modal, Notice, roleName } from "./components";
+import {
+    Drawer,
+    DrawerClose,
+    Field,
+    Modal,
+    Notice,
+    roleName,
+} from "./components";
 
 export function MemberEditor({
     state,
@@ -21,12 +28,14 @@ export function MemberEditor({
     const m = member;
     const [grants, setGrants] = useState(m?.extra_models || []);
     return (
-        <Modal
+        <Drawer
+            busy={busy}
             title={m ? m.name : "Add a member"}
             description="Use the object ID from this organization’s Entra directory. Saving creates a draft gateway entitlement; it does not send an invitation or create a directory account."
             onClose={close}
         >
             <form
+                className="drawer-form"
                 onSubmit={(e) => {
                     e.preventDefault();
                     const f = new FormData(e.currentTarget);
@@ -42,128 +51,134 @@ export function MemberEditor({
                     });
                 }}
             >
-                <Field
-                    label="Entra object ID"
-                    help="For guests, use their object ID in this tenant."
+                <fieldset
+                    className="drawer-scroll drawer-fields"
+                    disabled={!editable || busy}
                 >
-                    <input
-                        name="id"
-                        defaultValue={m?.id}
-                        required
-                        readOnly={!!m}
-                        pattern="[a-fA-F0-9-]{36}"
-                    />
-                </Field>
-                <div className="twocol">
-                    <Field label="Full name">
-                        <input
-                            name="name"
-                            defaultValue={m?.name}
-                            required
-                            maxLength={120}
-                        />
-                    </Field>
-                    <Field label="Email">
-                        <input
-                            name="email"
-                            type="email"
-                            defaultValue={m?.email}
-                            required
-                        />
-                    </Field>
-                </div>
-                <div className="twocol">
-                    <Field label="Role">
-                        <select
-                            name="role"
-                            defaultValue={m?.role || "developer"}
-                        >
-                            {[
-                                "developer",
-                                "auditor",
-                                "billing",
-                                "admin",
-                                ...(state.viewer.role === "owner"
-                                    ? ["owner"]
-                                    : []),
-                            ].map((r) => (
-                                <option key={r} value={r}>
-                                    {roleName(r)}
-                                </option>
-                            ))}
-                        </select>
-                    </Field>
-                    <Field label="Primary group">
-                        <select
-                            name="group"
-                            defaultValue={m?.group_id || state.groups[0]?.id}
-                        >
-                            {state.groups.map((g) => (
-                                <option key={g.id} value={g.id}>
-                                    {g.name}
-                                </option>
-                            ))}
-                        </select>
-                    </Field>
-                </div>
-                <div className="twocol">
-                    <Field label="Status">
-                        <select
-                            name="status"
-                            defaultValue={m?.status || "active"}
-                        >
-                            <option value="active">Active</option>
-                            <option value="suspended">Suspended</option>
-                        </select>
-                    </Field>
                     <Field
-                        label="Monthly token limit"
-                        help="0 means no personal limit; group and organization limits still apply."
+                        label="Entra object ID"
+                        help="For guests, use their object ID in this tenant."
                     >
                         <input
-                            name="tokens"
-                            type="number"
-                            min="0"
-                            step="1"
-                            defaultValue={m?.monthly_tokens || 0}
+                            name="id"
+                            defaultValue={m?.id}
+                            required
+                            readOnly={!!m}
+                            pattern="[a-fA-F0-9-]{36}"
                         />
                     </Field>
-                </div>
-                <fieldset className="field modelchoices">
-                    <legend>Personal model grants</legend>
-                    <p className="footnote">
-                        Additional access beyond the primary group. Clear a
-                        grant to revoke the exception at the next publication.
-                    </p>
-                    {state.models.map((model) => (
-                        <label className="checkrow" key={model.name}>
+                    <div className="twocol">
+                        <Field label="Full name">
                             <input
-                                type="checkbox"
-                                disabled={!editable}
-                                checked={grants.includes(model.name)}
-                                onChange={(e) =>
-                                    setGrants(
-                                        e.target.checked
-                                            ? [...grants, model.name]
-                                            : grants.filter(
-                                                  (id) => id !== model.name,
-                                              ),
-                                    )
-                                }
+                                name="name"
+                                defaultValue={m?.name}
+                                required
+                                maxLength={120}
                             />
-                            {model.labelOverride}
-                        </label>
-                    ))}
+                        </Field>
+                        <Field label="Email">
+                            <input
+                                name="email"
+                                type="email"
+                                defaultValue={m?.email}
+                                required
+                            />
+                        </Field>
+                    </div>
+                    <div className="twocol">
+                        <Field label="Role">
+                            <select
+                                name="role"
+                                defaultValue={m?.role || "developer"}
+                            >
+                                {[
+                                    "developer",
+                                    "auditor",
+                                    "billing",
+                                    "admin",
+                                    ...(state.viewer.role === "owner"
+                                        ? ["owner"]
+                                        : []),
+                                ].map((r) => (
+                                    <option key={r} value={r}>
+                                        {roleName(r)}
+                                    </option>
+                                ))}
+                            </select>
+                        </Field>
+                        <Field label="Primary group">
+                            <select
+                                name="group"
+                                defaultValue={
+                                    m?.group_id || state.groups[0]?.id
+                                }
+                            >
+                                {state.groups.map((g) => (
+                                    <option key={g.id} value={g.id}>
+                                        {g.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </Field>
+                    </div>
+                    <div className="twocol">
+                        <Field label="Status">
+                            <select
+                                name="status"
+                                defaultValue={m?.status || "active"}
+                            >
+                                <option value="active">Active</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </Field>
+                        <Field
+                            label="Monthly token limit"
+                            help="0 means no personal limit; group and organization limits still apply."
+                        >
+                            <input
+                                name="tokens"
+                                type="number"
+                                min="0"
+                                step="1"
+                                defaultValue={m?.monthly_tokens || 0}
+                            />
+                        </Field>
+                    </div>
+                    <fieldset className="field modelchoices">
+                        <legend>Personal model grants</legend>
+                        <p className="footnote">
+                            Additional access beyond the primary group. Clear a
+                            grant to revoke the exception at the next
+                            publication.
+                        </p>
+                        {state.models.map((model) => (
+                            <label className="checkrow" key={model.name}>
+                                <input
+                                    type="checkbox"
+                                    disabled={!editable}
+                                    checked={grants.includes(model.name)}
+                                    onChange={(e) =>
+                                        setGrants(
+                                            e.target.checked
+                                                ? [...grants, model.name]
+                                                : grants.filter(
+                                                      (id) => id !== model.name,
+                                                  ),
+                                        )
+                                    }
+                                />
+                                {model.labelOverride}
+                            </label>
+                        ))}
+                    </fieldset>
+                    <div className="impact">
+                        Changes affect this member’s next gateway requests after
+                        publication. Suspending access does not delete their
+                        local conversations.
+                    </div>
                 </fieldset>
-                <div className="impact">
-                    Changes affect this member’s next gateway requests after
-                    publication. Suspending access does not delete their local
-                    conversations.
-                </div>
                 <div className="dialogfooter">
-                    <button type="button" className="button" onClick={close}>
-                        Cancel
-                    </button>
+                    <DrawerClose disabled={busy} />
                     <button
                         className="button primary"
                         disabled={!editable || busy}
@@ -177,7 +192,7 @@ export function MemberEditor({
                     </button>
                 </div>
             </form>
-        </Modal>
+        </Drawer>
     );
 }
 export function GroupEditor({
@@ -198,12 +213,14 @@ export function GroupEditor({
     const [models, setModels] = useState(group?.model_ids || []);
     const count = state.members.filter((m) => m.group_id === group?.id).length;
     return (
-        <Modal
+        <Drawer
+            busy={busy}
             title={group ? group.name : "Create a group"}
             description="Groups give developers a clear set of models and one shared monthly token limit."
             onClose={close}
         >
             <form
+                className="drawer-form"
                 onSubmit={(e) => {
                     e.preventDefault();
                     const f = new FormData(e.currentTarget);
@@ -218,104 +235,107 @@ export function GroupEditor({
                     });
                 }}
             >
-                <Field label="Group name">
-                    <input
-                        name="name"
-                        defaultValue={group?.name}
-                        required
-                        maxLength={80}
-                    />
-                </Field>
-                <Field label="Description">
-                    <input
-                        name="description"
-                        defaultValue={group?.description}
-                        maxLength={500}
-                    />
-                </Field>
-                <div className="field">
-                    <label>Allowed models</label>
-                    <div className="modelchoices">
-                        {state.models.map((m) => (
-                            <label className="checkrow" key={m.name}>
-                                <input
-                                    type="checkbox"
-                                    checked={models.includes(m.name)}
-                                    onChange={(e) =>
-                                        setModels(
-                                            e.target.checked
-                                                ? [...models, m.name]
-                                                : models.filter(
-                                                      (x) => x !== m.name,
-                                                  ),
-                                        )
-                                    }
-                                />
-                                {m.labelOverride}
-                                <small>{m.anthropicFamilyTier}</small>
-                            </label>
-                        ))}
-                    </div>
-                </div>
-                <Field label="Default model">
-                    <select
-                        name="default"
-                        key={models.join(",")}
-                        defaultValue={
-                            models.includes(group?.default_model || "")
-                                ? group?.default_model
-                                : models[0] || ""
-                        }
-                    >
-                        {!models.length && (
-                            <option value="">No models selected</option>
-                        )}
-                        {state.models
-                            .filter((m) => models.includes(m.name))
-                            .map((m) => (
-                                <option value={m.name} key={m.name}>
+                <fieldset
+                    className="drawer-scroll drawer-fields"
+                    disabled={!editable || busy}
+                >
+                    <Field label="Group name">
+                        <input
+                            name="name"
+                            defaultValue={group?.name}
+                            required
+                            maxLength={80}
+                        />
+                    </Field>
+                    <Field label="Description">
+                        <input
+                            name="description"
+                            defaultValue={group?.description}
+                            maxLength={500}
+                        />
+                    </Field>
+                    <div className="field">
+                        <label>Allowed models</label>
+                        <div className="modelchoices">
+                            {state.models.map((m) => (
+                                <label className="checkrow" key={m.name}>
+                                    <input
+                                        type="checkbox"
+                                        checked={models.includes(m.name)}
+                                        onChange={(e) =>
+                                            setModels(
+                                                e.target.checked
+                                                    ? [...models, m.name]
+                                                    : models.filter(
+                                                          (x) => x !== m.name,
+                                                      ),
+                                            )
+                                        }
+                                    />
                                     {m.labelOverride}
-                                </option>
+                                    <small>{m.anthropicFamilyTier}</small>
+                                </label>
                             ))}
-                    </select>
-                </Field>
-                <div className="twocol">
-                    <Field
-                        label="Monthly token quota"
-                        help="0 leaves this group unlimited; organization limits still apply."
-                    >
-                        <input
-                            name="tokens"
-                            type="number"
-                            min="0"
-                            step="1"
-                            defaultValue={group?.monthly_tokens || 0}
-                        />
+                        </div>
+                    </div>
+                    <Field label="Default model">
+                        <select
+                            name="default"
+                            key={models.join(",")}
+                            defaultValue={
+                                models.includes(group?.default_model || "")
+                                    ? group?.default_model
+                                    : models[0] || ""
+                            }
+                        >
+                            {!models.length && (
+                                <option value="">No models selected</option>
+                            )}
+                            {state.models
+                                .filter((m) => models.includes(m.name))
+                                .map((m) => (
+                                    <option value={m.name} key={m.name}>
+                                        {m.labelOverride}
+                                    </option>
+                                ))}
+                        </select>
                     </Field>
-                    <Field
-                        label="Planning budget (USD)"
-                        help="A planning threshold, not a hard billing cap."
-                    >
-                        <input
-                            name="budget"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            defaultValue={group?.budget_usd || 0}
-                        />
-                    </Field>
-                </div>
-                <div className="impact">
-                    <strong>
-                        {count} {count === 1 ? "person" : "people"}
-                    </strong>{" "}
-                    in this group will receive the reviewed model access after
-                    publication. {models.length} models are selected.
-                </div>
+                    <div className="twocol">
+                        <Field
+                            label="Monthly token quota"
+                            help="0 leaves this group unlimited; organization limits still apply."
+                        >
+                            <input
+                                name="tokens"
+                                type="number"
+                                min="0"
+                                step="1"
+                                defaultValue={group?.monthly_tokens || 0}
+                            />
+                        </Field>
+                        <Field
+                            label="Planning budget (USD)"
+                            help="A planning threshold, not a hard billing cap."
+                        >
+                            <input
+                                name="budget"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                defaultValue={group?.budget_usd || 0}
+                            />
+                        </Field>
+                    </div>
+                    <div className="impact">
+                        <strong>
+                            {count} {count === 1 ? "person" : "people"}
+                        </strong>{" "}
+                        in this group will receive the reviewed model access
+                        after publication. {models.length} models are selected.
+                    </div>
+                </fieldset>
                 <div className="dialogfooter">
-                    <button type="button" className="button" onClick={close}>
-                        Cancel
-                    </button>
+                    <DrawerClose disabled={busy} />
                     <button
                         className="button primary"
                         disabled={!editable || busy}
@@ -329,7 +349,7 @@ export function GroupEditor({
                     </button>
                 </div>
             </form>
-        </Modal>
+        </Drawer>
     );
 }
 export function SettingsForm({
@@ -347,109 +367,160 @@ export function SettingsForm({
     save: (s: Settings) => Promise<boolean>;
     organization: boolean;
 }) {
+    const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState(settings);
-    const dirty = JSON.stringify(draft) !== JSON.stringify(settings);
-    const row = (
-        key: keyof Settings,
-        label: string,
-        description: string,
-        enabled: boolean,
-    ) => (
-        <div className="settingrow" key={key}>
-            <div>
-                <label htmlFor={key}>{label}</label>
-                <p>{description}</p>
-            </div>
-            <input
-                id={key}
-                type={key === "name" ? "text" : "number"}
-                className={key === "name" ? "wide" : ""}
-                min="0"
-                step={key === "monthly_budget_usd" ? "0.01" : "1"}
-                value={draft[key]}
-                disabled={!enabled}
-                title={
-                    !enabled
-                        ? "Your administration role cannot change this setting."
-                        : undefined
-                }
-                onChange={(e) =>
-                    setDraft({
-                        ...draft,
-                        [key]:
-                            key === "name"
-                                ? e.target.value
-                                : Number(e.target.value),
-                    })
-                }
-            />
-        </div>
-    );
+    const fields: {
+        key: keyof Settings;
+        label: string;
+        help: string;
+        enabled: boolean;
+    }[] = organization
+        ? [
+              {
+                  key: "name",
+                  label: "Organization name",
+                  help: "Shown in this console and publication confirmations.",
+                  enabled: admin,
+              },
+          ]
+        : [
+              {
+                  key: "monthly_budget_usd",
+                  label: "Monthly planning budget (USD)",
+                  help: "A planning threshold. 0 means no planning budget is set.",
+                  enabled: finance,
+              },
+              {
+                  key: "monthly_tokens",
+                  label: "Organization token quota",
+                  help: "Monthly allowance across the gateway. 0 means unlimited.",
+                  enabled: admin,
+              },
+              {
+                  key: "member_tokens_per_minute",
+                  label: "Tokens per minute, per developer",
+                  help: "Controls token bursts. 0 adds no per-person rate limit.",
+                  enabled: admin,
+              },
+              {
+                  key: "member_requests_per_minute",
+                  label: "Requests per minute, per developer",
+                  help: "Includes inference and token-counting requests. 0 adds no rate limit.",
+                  enabled: admin,
+              },
+          ];
     return (
-        <form
-            className="settings"
-            onSubmit={(e) => {
-                e.preventDefault();
-                save(draft);
-            }}
-        >
+        <div className="settings">
             <div className="sheet">
-                {organization ? (
-                    row(
-                        "name",
-                        "Organization name",
-                        "Shown in this console and in publication confirmations.",
-                        admin,
-                    )
-                ) : (
-                    <>
-                        {row(
-                            "monthly_budget_usd",
-                            "Monthly planning budget (USD)",
-                            "A planning threshold for your organization. 0 means no planning budget is set.",
-                            finance,
-                        )}
-                        {row(
-                            "monthly_tokens",
-                            "Organization token quota",
-                            "Monthly token allowance across everyone using this gateway. 0 means unlimited.",
-                            admin,
-                        )}
-                        {row(
-                            "member_tokens_per_minute",
-                            "Tokens per minute, per developer",
-                            "Controls bursts from an individual developer. 0 adds no per-person rate limit.",
-                            admin,
-                        )}
-                        {row(
-                            "member_requests_per_minute",
-                            "Requests per minute, per developer",
-                            "Includes inference and token-counting requests. 0 adds no per-person rate limit.",
-                            admin,
-                        )}
-                    </>
-                )}
+                {fields.map((field) => (
+                    <div className="settingrow" key={field.key}>
+                        <div>
+                            <strong>{field.label}</strong>
+                            <p>{field.help}</p>
+                        </div>
+                        <span className="num">
+                            {field.key === "name"
+                                ? settings.name
+                                : Number(settings[field.key]) === 0
+                                  ? "Not set"
+                                  : Number(
+                                        settings[field.key],
+                                    ).toLocaleString()}
+                        </span>
+                    </div>
+                ))}
             </div>
-            {dirty && (
-                <div className="impact">
-                    You have unsaved changes. Gateway limits take effect only
-                    after review and publication.
-                </div>
-            )}
             <div className="actions">
                 <button
-                    type="button"
-                    className="button"
-                    disabled={!dirty || busy}
-                    onClick={() => setDraft(settings)}
+                    className="button primary"
+                    disabled={!fields.some((f) => f.enabled)}
+                    onClick={() => {
+                        setDraft(settings);
+                        setEditing(true);
+                    }}
                 >
-                    Discard
-                </button>
-                <button className="button primary" disabled={!dirty || busy}>
-                    {busy ? "Saving…" : "Save changes"}
+                    {organization
+                        ? "Edit organization"
+                        : "Edit budget & limits"}
                 </button>
             </div>
-        </form>
+            {editing && (
+                <Drawer
+                    title={
+                        organization
+                            ? "Organization settings"
+                            : "Budget & limits"
+                    }
+                    description="Save a draft, then review and publish gateway limits when ready. Planning budgets do not stop inference."
+                    onClose={() => setEditing(false)}
+                    busy={busy}
+                >
+                    <form
+                        className="drawer-form"
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            if (await save(draft)) setEditing(false);
+                        }}
+                    >
+                        <div className="drawer-scroll">
+                            {fields.map((field) => (
+                                <Field
+                                    key={field.key}
+                                    label={field.label}
+                                    help={field.help}
+                                >
+                                    <input
+                                        type={
+                                            field.key === "name"
+                                                ? "text"
+                                                : "number"
+                                        }
+                                        min="0"
+                                        maxLength={
+                                            field.key === "name"
+                                                ? 120
+                                                : undefined
+                                        }
+                                        required
+                                        step={
+                                            field.key === "monthly_budget_usd"
+                                                ? "0.01"
+                                                : "1"
+                                        }
+                                        value={draft[field.key]}
+                                        disabled={!field.enabled || busy}
+                                        onChange={(e) =>
+                                            setDraft({
+                                                ...draft,
+                                                [field.key]:
+                                                    field.key === "name"
+                                                        ? e.target.value
+                                                        : Number(
+                                                              e.target.value,
+                                                          ),
+                                            })
+                                        }
+                                    />
+                                </Field>
+                            ))}
+                        </div>
+                        <div className="dialogfooter">
+                            <DrawerClose disabled={busy} />
+                            <button
+                                className="button primary"
+                                disabled={
+                                    busy ||
+                                    JSON.stringify(draft) ===
+                                        JSON.stringify(settings)
+                                }
+                            >
+                                {busy ? "Saving…" : "Save changes"}
+                            </button>
+                        </div>
+                    </form>
+                </Drawer>
+            )}
+        </div>
     );
 }
 export function PublishDialog({

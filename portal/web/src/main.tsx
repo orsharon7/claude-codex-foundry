@@ -1,5 +1,6 @@
 import { Command } from "./Command";
 import { MemberImport } from "./MemberImport";
+import { CostAnalysis } from "./CostAnalysis";
 import { Spend } from "./Spend";
 import { UsageChart } from "./UsageChart";
 import {
@@ -52,7 +53,8 @@ import {
     Empty,
     Field,
     fmt,
-    Modal,
+    Drawer,
+    DrawerClose,
     Notice,
     PageHead,
     Pager,
@@ -79,6 +81,7 @@ const pages = [
         icon: ChartLine,
         section: "Usage & spend",
     },
+    { id: "costs", name: "Cost analysis", icon: CurrencyDollar, section: "" },
     {
         id: "budgets",
         name: "Budgets & limits",
@@ -249,11 +252,13 @@ function App() {
             );
             await load();
             notify(
-                kind === "request"
-                    ? "Access request sent."
-                    : result.gateway_changed
-                      ? "Draft saved. Review and publish to apply gateway changes."
-                      : "Changes saved.",
+                kind === "pricing"
+                    ? "Planning rates saved. Cost estimates will refresh."
+                    : kind === "request"
+                      ? "Access request sent."
+                      : result.gateway_changed
+                        ? "Draft saved. Review and publish to apply gateway changes."
+                        : "Changes saved.",
             );
             return true;
         } catch (e) {
@@ -1283,6 +1288,8 @@ function App() {
                     )}
                 </>
             );
+        if (currentPage === "costs")
+            return <CostAnalysis state={state} busy={busy} save={save} />;
         if (currentPage === "analytics")
             return (
                 <>
@@ -1996,24 +2003,26 @@ function App() {
                 />
             )}
             {panel?.kind === "audit" && (
-                <Modal
+                <Drawer
                     title="Change details"
                     description={`${panel.value.actor} · ${date(panel.value.at)}`}
                     onClose={() => setPanel(undefined)}
                 >
-                    <pre className="codewell">
-                        {JSON.stringify(panel.value, null, 2)}
-                    </pre>
-                    <button
-                        className="button"
-                        onClick={() =>
-                            download("audit-event.json", panel.value)
-                        }
-                    >
-                        <DownloadSimple />
-                        Download JSON
-                    </button>
-                </Modal>
+                    <div className="drawer-scroll">
+                        <pre className="codewell">
+                            {JSON.stringify(panel.value, null, 2)}
+                        </pre>
+                        <button
+                            className="button"
+                            onClick={() =>
+                                download("audit-event.json", panel.value)
+                            }
+                        >
+                            <DownloadSimple />
+                            Download JSON
+                        </button>
+                    </div>
+                </Drawer>
             )}
             {panel?.kind === "command" && (
                 <Command
@@ -2024,12 +2033,14 @@ function App() {
                 />
             )}
             {panel?.kind === "request" && (
-                <Modal
+                <Drawer
+                    busy={busy}
                     title="Request model access"
                     description="Your administrator will review this request. Approval becomes active after gateway publication."
                     onClose={() => setPanel(undefined)}
                 >
                     <form
+                        className="drawer-form"
                         onSubmit={async (e) => {
                             e.preventDefault();
                             const f = new FormData(e.currentTarget);
@@ -2042,30 +2053,33 @@ function App() {
                                 setPanel(undefined);
                         }}
                     >
-                        <Field label="Model">
-                            <select name="model">
-                                {state.models.map((m) => (
-                                    <option key={m.name} value={m.name}>
-                                        {m.labelOverride}
-                                    </option>
-                                ))}
-                            </select>
-                        </Field>
-                        <Field label="Why do you need this model?">
-                            <textarea
-                                name="reason"
-                                required
-                                minLength={5}
-                                maxLength={1000}
-                            />
-                        </Field>
+                        <div className="drawer-scroll">
+                            <Field label="Model">
+                                <select name="model">
+                                    {state.models.map((m) => (
+                                        <option key={m.name} value={m.name}>
+                                            {m.labelOverride}
+                                        </option>
+                                    ))}
+                                </select>
+                            </Field>
+                            <Field label="Why do you need this model?">
+                                <textarea
+                                    name="reason"
+                                    required
+                                    minLength={5}
+                                    maxLength={1000}
+                                />
+                            </Field>
+                        </div>
                         <div className="dialogfooter">
+                            <DrawerClose disabled={busy} />
                             <button className="button primary" disabled={busy}>
                                 Send access request
                             </button>
                         </div>
                     </form>
-                </Modal>
+                </Drawer>
             )}
             {toast && (
                 <div

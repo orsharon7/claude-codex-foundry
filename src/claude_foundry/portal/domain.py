@@ -2,12 +2,12 @@
 
 import csv
 import io
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from itertools import islice
 from typing import Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
 
 
 def now():
@@ -63,6 +63,9 @@ class Price(StrictModel):
     model: str
     input_per_million: float = Field(ge=0, le=10000)
     output_per_million: float = Field(ge=0, le=10000)
+    source_url: HttpUrl | None = None
+    verified_on: date | None = None
+    note: str | None = Field(default=None, max_length=500)
 
 
 def seed(config, owner_id, owner_name="Organization owner", owner_email="owner@example.com"):
@@ -224,7 +227,7 @@ def apply_change(state, change, actor, model_ids):
             )
         state["settings"] = value
     elif kind == "pricing":
-        value = Price.model_validate(value).model_dump()
+        value = Price.model_validate(value).model_dump(mode="json", exclude_none=True)
         if value["model"] not in model_ids:
             raise ValueError("Unknown model")
         before = next((p for p in state["prices"] if p["model"] == value["model"]), None)

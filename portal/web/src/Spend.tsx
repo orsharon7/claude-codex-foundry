@@ -1,6 +1,14 @@
 import { useState } from "react";
 import type { State, Telemetry } from "./types";
-import { Empty, Field, fmt, Modal, Notice, Status } from "./components";
+import {
+    Empty,
+    Field,
+    fmt,
+    Drawer,
+    DrawerClose,
+    Notice,
+    Status,
+} from "./components";
 import { standardRateEstimate } from "./estimates";
 
 const dollars = (n: number) =>
@@ -279,7 +287,8 @@ export function Spend({
                 it does not change Azure prices.
             </p>
             {editing && (
-                <Modal
+                <Drawer
+                    busy={busy}
                     title="Set model planning rates"
                     description={
                         state.models.find((m) => m.name === editing)
@@ -288,6 +297,7 @@ export function Spend({
                     onClose={() => setEditing(undefined)}
                 >
                     <form
+                        className="drawer-form"
                         onSubmit={async (e) => {
                             e.preventDefault();
                             const form = new FormData(e.currentTarget);
@@ -305,47 +315,47 @@ export function Spend({
                                 setEditing(undefined);
                         }}
                     >
-                        <Notice>
-                            Use your contracted Azure rates. These values are
-                            for estimates only and do not change the price
-                            charged by Microsoft.
-                        </Notice>
-                        <Field label="Input USD per million tokens">
-                            <input
-                                name="input"
-                                type="number"
-                                min="0"
-                                max="10000"
-                                step="0.000001"
-                                defaultValue={currentPrice?.input_per_million}
-                                required
-                            />
-                        </Field>
-                        <Field label="Output USD per million tokens">
-                            <input
-                                name="output"
-                                type="number"
-                                min="0"
-                                max="10000"
-                                step="0.000001"
-                                defaultValue={currentPrice?.output_per_million}
-                                required
-                            />
-                        </Field>
+                        <div className="drawer-scroll">
+                            <Notice>
+                                Use your contracted Azure rates. These values
+                                are for estimates only and do not change the
+                                price charged by Microsoft.
+                            </Notice>
+                            <Field label="Input USD per million tokens">
+                                <input
+                                    name="input"
+                                    type="number"
+                                    min="0"
+                                    max="10000"
+                                    step="0.000001"
+                                    defaultValue={
+                                        currentPrice?.input_per_million
+                                    }
+                                    required
+                                />
+                            </Field>
+                            <Field label="Output USD per million tokens">
+                                <input
+                                    name="output"
+                                    type="number"
+                                    min="0"
+                                    max="10000"
+                                    step="0.000001"
+                                    defaultValue={
+                                        currentPrice?.output_per_million
+                                    }
+                                    required
+                                />
+                            </Field>
+                        </div>
                         <div className="dialogfooter">
-                            <button
-                                className="button"
-                                type="button"
-                                onClick={() => setEditing(undefined)}
-                            >
-                                Cancel
-                            </button>
+                            <DrawerClose disabled={busy} />
                             <button className="button primary" disabled={busy}>
                                 {busy ? "Saving…" : "Save planning rates"}
                             </button>
                         </div>
                     </form>
-                </Modal>
+                </Drawer>
             )}
         </section>
     );
