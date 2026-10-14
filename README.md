@@ -1,5 +1,7 @@
 # Claude on Azure Foundry through API Management
 
+> **Development branch:** `feat/admin-portal` contains an unreleased [management portal preview](portal/README.md). It is isolated from the released gateway/client setup. Do not deploy it to a production inference API or distribute a customer release until the portal’s release checks are complete.
+
 Configure Claude Desktop **Chat and Code**, plus the Claude Code CLI, to use an organization's Anthropic deployments in Microsoft Foundry through standard Azure API Management.
 
 Users sign in with Microsoft Entra ID. APIM validates their token and forwards it to Foundry, where Azure RBAC authorizes inference. No shared API key or new AI Gateway resource is required.
