@@ -1,6 +1,8 @@
-# Management portal — unreleased development branch
+# Management portal — preview
 
-All portal work belongs on `feat/admin-portal`. Do not merge it into `main`, tag a release, distribute a customer build, or connect it to a production inference API until the release checks below are complete. CI validates this branch; it does not deploy or publish it.
+The portal is included in `main` for continued development and evaluation. Use feature branches and pull requests for follow-up work. CI validates source; it does not deploy Azure resources. The deployment workflow below uses an isolated preview API. Complete the remaining validation and an explicit rollout review before customer production use.
+
+For daily administration and screenshots, start with the [portal user guide](../docs/portal-guide.md). For code contributions, use [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 This is a customer-owned control plane for the existing standard APIM gateway. It uses a React interface, an authenticated Python API on Azure Functions Flex Consumption, and private Azure Blob state. The portal is not in the inference request path. Reviewed access policies are compiled and applied to one explicitly configured APIM API.
 

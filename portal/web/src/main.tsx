@@ -1860,7 +1860,7 @@ function App() {
                             <ArrowSquareOut size={13} />
                         </a>
                         <div style={{ marginTop: 8 }}>
-                            Development branch · not released
+                            Preview · validation in progress
                         </div>
                     </div>
                 </aside>

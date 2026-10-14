@@ -1,6 +1,6 @@
 # Preview validation record
 
-Status: **unreleased**. This record describes checks on the development branch, not a production readiness certification. Customer configuration and raw Azure evidence remain outside Git.
+Status: **preview**. The portal source is included in `main` for continued development following maintainer approval on 2026-10-14. This record describes preview checks, not a production readiness certification. Customer configuration and raw Azure evidence remain outside Git.
 
 ## Verified on 2026-10-14
 
@@ -26,4 +26,4 @@ Cost-analysis checks cover bounded ranges, escaped KQL literals, rejected partia
 - Run the full Mac onboarding journey from an exported portal profile and verify model defaults and revocations.
 - Complete keyboard/screen-reader and error-state coverage, operational monitoring, retention and recovery procedures, security review, and load/cost measurements for the intended deployment size.
 
-The detailed release checklist and cost limitations are in [README.md](README.md). Do not merge into `main`, tag, or distribute a customer release until those checks are complete and release is explicitly approved.
+The detailed release checklist and cost limitations are in [README.md](README.md). Source merges are permitted for continued development. Complete the outstanding checks and obtain explicit rollout approval before a production release or customer production deployment.
