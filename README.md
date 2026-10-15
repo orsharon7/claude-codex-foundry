@@ -6,7 +6,7 @@ Give developers a familiar Claude experience with Microsoft Entra sign-in. Deplo
 
 [Install on a Mac](docs/macos.md) · [Deploy for your organization](docs/administrator.md) · [Explore the portal](docs/portal-guide.md) · [Contribute](CONTRIBUTING.md)
 
-> **Codex and content-log preview:** these additions remain on the dedicated [`feat/codex-azure` branch](https://github.com/orsharon7/claude-codex-foundry/tree/feat/codex-azure), outside `main`. See its [setup guide](https://github.com/orsharon7/claude-codex-foundry/blob/feat/codex-azure/docs/codex.md), [validation evidence](https://github.com/orsharon7/claude-codex-foundry/blob/feat/codex-azure/docs/codex-validation.md), and [restricted prompt/response logs](https://github.com/orsharon7/claude-codex-foundry/blob/feat/codex-azure/docs/content-logs.md). The ordinary ChatGPT app is not a gateway client.
+> **Codex and content-log preview:** the `feat/codex-azure` branch adds Codex Desktop/CLI routing to Azure OpenAI models through a separate standard APIM API. It includes Entra sign-in, model qualification, Mac onboarding, restore, and a readable-history handoff for existing conversations. [Setup and limitations](docs/codex.md) · [Validation record](docs/codex-validation.md). The management portal's current policy and pricing features remain Claude-only; optional [content logs](docs/content-logs.md) support both clients. These additions remain outside `main`.
 
 > **Portal preview:** the management portal is included in `main` for continued development and evaluation. Its Azure deployment guide uses an isolated preview API. See the [validation record and remaining production checks](portal/VALIDATION.md) before planning a customer rollout. Merging source does not deploy Azure resources.
 
@@ -24,7 +24,7 @@ Give developers a familiar Claude experience with Microsoft Entra sign-in. Deplo
 | **Finance and operations** | Explore usage by model, group, and developer; combine filters; compare periods; export CSVs; maintain sourced planning rates and dollar thresholds. |
 | **Security reviewers** | Inspect Entra authentication, API-enforced roles, managed identities, private portal storage, policy publication, and administrative audit records. |
 
-The portal manages gateway access and operational metadata. Entra remains responsible for directory accounts and sign-in policy; Azure Cost Management remains responsible for billed spend. Conversations are not displayed or managed in the portal.
+The portal manages gateway access and operational metadata. Entra remains responsible for directory accounts and sign-in policy; Azure Cost Management remains responsible for billed spend. Optional [prompt and response logs](docs/content-logs.md) let owners and administrators inspect newly captured gateway messages with audited access. Capture is off by default; this is not a full conversation archive.
 
 ## Choose your starting point
 
@@ -101,7 +101,7 @@ The portal is outside the inference path: its availability does not determine wh
 ## Costs and practical limits
 
 - **Azure charges apply.** APIM has an ongoing service charge; inference and monitoring are metered. The portal uses Functions Flex Consumption with no always-ready instances, but storage, private endpoints, DNS, and logs can still incur charges.
-- **Dollar budgets are planning thresholds.** They do not stop Azure billing. Token quotas and request limits apply after policy publication; streaming estimates and concurrent requests can overshoot.
+- **Hard dollar enforcement is a release blocker.** Current dollar budgets are planning thresholds, with no individual dollar cap or group-administrator role. Token quotas and request limits apply after policy publication; streaming estimates and concurrent requests can overshoot. See the [required budget hierarchy and enforcement checks](docs/budget-enforcement.md).
 - **Cost analysis is an estimate.** Rates are maintained by administrators. Cache pricing, some prompt-length tiers, discounts, tax, and infrastructure costs are not reconciled. See the [pricing reference](portal/PRICING.md).
 - **Scale must be measured.** A 2,000-member import/policy-size check has passed; 2,000 concurrent developers have not been load-tested.
 - **Current onboarding targets macOS and Azure public cloud.** The baseline inference endpoints are public HTTPS. Private portal storage does not make Foundry or APIM private. Conversation import uses Claude's native wizard with documented source and attachment limits. Windows/Linux installers, SCIM, MDM enrollment, and immutable compliance archives are not included.
@@ -113,10 +113,12 @@ The portal is outside the inference path: its availability does not determine wh
 | Deploy infrastructure, models, and the gateway | [Organization administrator](docs/administrator.md) |
 | Install, sign in, update, or restore Claude settings | [Mac installation](docs/macos.md) |
 | Bring existing chats, projects, and local sessions | [Conversation migration](docs/conversation-migration.md) |
+| Configure Codex Desktop/CLI, OpenAI models and existing-work handoff | [Codex on Azure](docs/codex.md) |
 | Learn every portal workspace with real screenshots | [Portal guide and gallery](docs/portal-guide.md) |
 | Deploy or develop the portal | [Portal engineering guide](portal/README.md) |
 | Operate, upgrade, recover, and plan a rollout | [Operations guide](docs/operations.md) |
 | Query requests, errors, and token metrics | [Observability](docs/observability.md) |
+| Enable and inspect restricted prompt/response capture | [Content logs](docs/content-logs.md) |
 | Review identities, data, and trust boundaries | [Security architecture](docs/security.md) |
 | Understand sign-in, roles, Azure RBAC, and publication | [Identity and permissions](docs/identity-and-permissions.md) |
 | Diagnose errors | [Troubleshooting](docs/troubleshooting.md) |

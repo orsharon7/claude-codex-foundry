@@ -16,6 +16,12 @@ The baseline gateway requires the developer or a group to have Foundry inference
 
 Yes, through Claude Desktop's native import wizard. Claude & Codex on Azure supports enabling it during onboarding with `--enable-history-import` or an organization import policy. It copies eligible history into the Azure-connected profile and preserves originals. Source permissions and file-content limitations apply; see [conversation migration](conversation-migration.md). Restoring installation settings does not undo an import.
 
+## Can Codex Desktop and CLI use the same Azure foundation?
+
+Yes, on the `feat/codex-azure` feature branch. A separate **Codex via Azure Foundry** API exposes stateless OpenAI Responses with Entra authentication. The Mac installer preserves existing Codex settings and sessions. The current portal's policy and pricing workflows remain Claude-only. See [Codex setup](codex.md) and the [model/client validation record](codex-validation.md).
+
+Existing OpenAI-backed Codex conversations can contain encrypted state Azure cannot decrypt. The included read-only history exporter supports a reviewed visible-text handoff into a new Azure conversation. It preserves the original but does not transfer attachments, tool payloads or hidden reasoning. Ordinary ChatGPT cloud history is outside this integration.
+
 ## Does this need the new Azure AI Gateway product?
 
 The repository uses standard Azure API Management. The new foundation supports Basic v2 or Standard v2; Anthropic token metrics require a v2 tier. The API's display name is **Claude via Azure Foundry**.
@@ -38,7 +44,7 @@ The portal multiplies reported input/output tokens by the currently configured p
 
 ## Can administrators read developers' prompts or chats?
 
-The portal does not offer conversation viewing or retention controls. New gateway diagnostics are configured for operational metadata with zero body bytes; existing APIM diagnostics are preserved and must be reviewed separately. Provider handling and local Claude storage follow their own configuration and terms.
+Yes, when an organization explicitly enables [prompt and response logging](content-logs.md). Portal owners and administrators can inspect newly captured Claude/Codex gateway messages after recording an access reason. Billing, auditor and developer roles cannot view them. Capture is off by default, with seven-day configured retention. Earlier uncaptured chats cannot be recovered, and full local conversation history is not imported.
 
 ## Does portal membership synchronize with Entra or send invitations?
 

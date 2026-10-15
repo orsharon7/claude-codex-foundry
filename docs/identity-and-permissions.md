@@ -1,5 +1,7 @@
 # Identity, permissions, and request flow
 
+For Codex Desktop/CLI, see [Codex identity and routing](codex.md#identity-security-and-logging). The feature preview uses the baseline user-token/RBAC path through a separate `codex-foundry` API; portal roles and grants currently apply to Claude only. Users may choose the same Azure CLI or lightweight MSAL sign-in mechanism.
+
 [← README](../README.md) · [Security boundaries](security.md) · [Portal guide](portal-guide.md) · [Validation evidence](../portal/VALIDATION.md)
 
 Claude & Codex on Azure separates three kinds of authority: permission to use a model, permission to administer the portal, and permission to administer Azure. A portal role does not grant an Azure role or an Entra directory role.
@@ -42,6 +44,7 @@ Use a dedicated single-tenant registration per environment. Register exact HTTPS
 | View organization members, groups, audit and analytics | Yes | Yes | Yes | Yes | Own member/group and requests only |
 | Export own client profile; request model access | Yes | Yes | Yes | Yes | Yes |
 | Add/import/edit members and model grants | Yes | Yes, except owners | No | No | No |
+| Inspect captured prompts/responses with an audited reason | Yes | Yes | No | No | No |
 | Change ownership | Yes | No | No | No | No |
 | Edit groups, token quotas and request rates | Yes | Yes | No | No | No |
 | Set organization dollar planning threshold and model rates | Yes | Yes | Yes | No | No |
@@ -59,6 +62,7 @@ Billing and auditors can read organization identities and administrative history
 | --- | --- | --- |
 | Portal user-assigned managed identity | Custom Claude & Codex policy editor | One configured APIM API. Allows API-policy and operation-policy read/write. The code updates the API policy and `models` operation; the role can edit **all operation policies within that API**. |
 | Portal managed identity | Monitoring Reader | Selected Application Insights component, for usage and cost queries. This can read the component's other telemetry too; API filtering in application queries does not narrow Azure RBAC. Use a dedicated component when stronger isolation is required. |
+| Portal managed identity (optional content logging) | Log Analytics Reader | Dedicated content-log workspace. Reads its underlying tables; API allowlisting is enforced by portal code, not this Azure role. Workspace/Azure administrators can bypass portal view auditing. |
 | Portal managed identity | Monitoring Metrics Publisher | Same Insights component, for authenticated portal telemetry ingestion. |
 | Portal managed identity | Storage Blob Data Owner | Dedicated portal storage account, containing Functions host/deployment data and portal state. This includes write/delete authority over those blobs. |
 | APIM managed identity | Cognitive Services User | Configured Foundry account, for governed inference. Confirm the actual foundation/preview assignments before deployment. |
